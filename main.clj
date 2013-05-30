@@ -231,6 +231,18 @@
 							30 (minor "R2 database response time is slow" dedup-2-alert)
 							(normal "R2 database response time is OK" dedup-2-alert))))
 
+                      ios-purchases-req-drop-off
+                      (where (and (match :grid "EC2")
+                                  (match :environment "PROD")
+                                  (match :service "gu_200_ok_request_status_rate-ios-purchases-api"))
+                             ; We expect at least 100 requests per 15-minute window
+                             (moving-time-window 900
+                                                 (combine riemann.folds/sum
+                                                          (with {:event "RequestRate" :group "Application" :grid "iOSPurchasesAPI"}
+                                                                (splitp < metric 100
+                                                                        (normal "Normal request rate for ios-purchases" dedup-alert)
+                                                                        (minor "Unusually low request rate for ios-purchases" dedup-alert))))))
+
 			discussionapi-http-response-time
 				(match :grid "Discussion"
 					(match :service "gu_httprequests_application_time-DiscussionApi"
@@ -312,6 +324,7 @@
 			r2frontend-http-response-time
 			r2frontend-http-cluster-response-time
 			r2frontend-db-response-time
+                        ios-purchases-req-drop-off
 			discussionapi-http-response-time
 			content-api-host-item-request-time
 			content-api-host-search-request-time
