@@ -243,6 +243,31 @@
                                                                         (normal "Normal request rate for ios-purchases" dedup-alert)
                                                                         (minor "Unusually low request rate for ios-purchases" dedup-alert))))))
 
+                      ios-purchases-%-5xxs
+                      (where (and (match :grid "EC2")
+                                  (match :environment "PROD")
+                                  (match :service #"gu_.*?_request_status_rate-ios-purchases-api"))
+                             (fixed-time-window 5
+                               (smap (fn [events]
+                                       (let [service-500s "gu_50x_error_request_status_rate-ios-purchases-api"
+                                             sum-metrics (fn [events]
+                                                           (apply + (map :metric events)))
+                                             total-rate (sum-metrics events)
+                                             percent (if (== total-rate 0)
+                                                       0
+                                                       (* 100
+                                                          (/ (sum-metrics (filter #(= (:service %) service-500s) events))
+                                                          total-rate)))
+                                             new-event {:event "%500s"
+                                                        :group "Application"
+                                                        :grid "iOSPurchasesAPI"
+                                                        :metric percent}]
+                                         (call-rescue
+                                          new-event
+                                          [(cond (< percent 1) (normal "Normal % 500s for ios-purchases" dedup-2-alert)
+                                                 (< percent 5) (minor "Moderate % 500s for ios-purchases" dedup-2-alert)
+                                                 :else (major "High % 500s for ios-purchases" dedup-2-alert))]))))))
+
 			discussionapi-http-response-time
 				(match :grid "Discussion"
 					(match :service "gu_httprequests_application_time-DiscussionApi"
@@ -325,6 +350,7 @@
 			r2frontend-http-cluster-response-time
 			r2frontend-db-response-time
                         ios-purchases-req-drop-off
+                        ios-purchases-%-5xxs
 			discussionapi-http-response-time
 			content-api-host-item-request-time
 			content-api-host-search-request-time
