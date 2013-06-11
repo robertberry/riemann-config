@@ -243,7 +243,7 @@
                                                                         (normal "Normal request rate for ios-purchases" dedup-alert)
                                                                         (minor "Unusually low request rate for ios-purchases" dedup-alert))))))
 
-                      ios-purchases-%-5xxs
+                      ios-purchases-perc-5xxs
                       (where (and (match :grid "EC2")
                                   (match :environment "PROD")
                                   (match :service #"gu_.*?_request_status_rate-ios-purchases-api"))
@@ -350,7 +350,7 @@
 			r2frontend-http-cluster-response-time
 			r2frontend-db-response-time
                         ios-purchases-req-drop-off
-                        ios-purchases-%-5xxs
+                        ios-purchases-perc-5xxs
 			discussionapi-http-response-time
 			content-api-host-item-request-time
 			content-api-host-search-request-time
